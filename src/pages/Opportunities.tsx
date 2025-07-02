@@ -22,7 +22,8 @@ import {
   Paperclip,
   Users,
   Plus,
-  Search
+  Search,
+  MoreVertical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +36,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useOpportunities } from "@/context/OpportunitiesContext";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Table, TableHeader, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 const InfoRow = ({ icon: Icon, label, value, isLink = false }) => (
   <div>
@@ -362,44 +364,57 @@ function OpportunitiesList({ opportunities, onSelect, onAddOpportunity, accounts
       </div>
       <div className="px-8 pb-8">
         <div className="overflow-x-auto rounded border border-border/50 bg-white shadow-sm">
-          <table className="min-w-full border-separate border-spacing-0">
-            <thead>
-              <tr className="bg-gray-100 hover:bg-gray-100 border-b border-gray-300">
-                <th className="w-[50px] px-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">#</th>
-                <th className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Opportunity Name</th>
-                <th className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Account Name</th>
-                <th className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Stage</th>
-                <th className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Close Date</th>
-                <th className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Opportunity Owner Alias</th>
-                <th className="text-left px-2 py-2 font-bold text-gray-700 bg-gray-100">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="min-w-full border-separate border-spacing-0">
+            <TableHeader>
+              <TableRow className="bg-gray-100 hover:bg-gray-100 border-b border-gray-300">
+                <TableHeader className="w-[40px] px-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100"><input type="checkbox" /></TableHeader>
+                <TableHeader className="w-[50px] px-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">#</TableHeader>
+                <TableHeader className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Opportunity Name</TableHeader>
+                <TableHeader className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Account Name</TableHeader>
+                <TableHeader className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Stage</TableHeader>
+                <TableHeader className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Close Date</TableHeader>
+                <TableHeader className="px-2 py-2 border-r border-gray-300 font-bold text-gray-700 bg-gray-100">Opportunity Owner Alias</TableHeader>
+                <TableHeader className="text-left px-2 py-2 font-bold text-gray-700 bg-gray-100">Actions</TableHeader>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.slice((page-1)*viewCount, page*viewCount).map((opp, idx) => (
-                <tr
+                <TableRow
                   key={opp.id}
                   className="border-b border-gray-300 text-sm group hover:bg-blue-50 transition-colors"
                   onClick={() => onSelect(opp)}
                 >
-                  <td className="px-2 py-1 text-muted-foreground border-r border-gray-200 bg-white group-hover:bg-blue-50">{idx + 1}</td>
-                  <td className="px-2 py-1 font-medium border-r border-gray-200 bg-white group-hover:bg-blue-50">
+                  <TableCell className="px-2 py-1 border-r border-gray-200 bg-white group-hover:bg-blue-50">
+                    <input type="checkbox" />
+                  </TableCell>
+                  <TableCell className="px-2 py-1 text-muted-foreground border-r border-gray-200 bg-white group-hover:bg-blue-50">{idx + 1}</TableCell>
+                  <TableCell className="px-2 py-1 font-medium border-r border-gray-200 bg-white group-hover:bg-blue-50">
                     <span className="text-blue-600 hover:underline cursor-pointer">{opp.title}</span>
-                  </td>
-                  <td className="px-2 py-1 font-bold border-r border-gray-200 bg-white group-hover:bg-blue-50">{opp.account}</td>
-                  <td className="px-2 py-1 border-r border-gray-200 bg-white group-hover:bg-blue-50">
+                  </TableCell>
+                  <TableCell className="px-2 py-1 font-bold border-r border-gray-200 bg-white group-hover:bg-blue-50">{opp.account}</TableCell>
+                  <TableCell className="px-2 py-1 border-r border-gray-200 bg-white group-hover:bg-blue-50">
                     <Badge variant={opp.stage === 'Closed Won' ? 'default' : opp.stage === 'Closed Lost' ? 'destructive' : 'secondary'}>{opp.stage}</Badge>
-                  </td>
-                  <td className="px-2 py-1 border-r border-gray-200 bg-white group-hover:bg-blue-50">{opp.closeDate}</td>
-                  <td className="px-2 py-1 border-r border-gray-200 bg-white group-hover:bg-blue-50">{opp.ownerAlias}</td>
-                  <td className="px-2 py-1 text-left bg-white group-hover:bg-blue-50">
-                    <Button variant="ghost" size="icon">
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="px-2 py-1 border-r border-gray-200 bg-white group-hover:bg-blue-50">{opp.closeDate}</TableCell>
+                  <TableCell className="px-2 py-1 border-r border-gray-200 bg-white group-hover:bg-blue-50">{opp.ownerAlias}</TableCell>
+                  <TableCell className="px-2 py-1 text-left bg-white group-hover:bg-blue-50">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem>Edit Opportunity</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600 focus:text-red-600">Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
       <Dialog open={showNewModal} onOpenChange={setShowNewModal}>

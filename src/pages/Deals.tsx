@@ -28,7 +28,7 @@ export default function Deals() {
           </Button>
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            New Deal
+            New Opportunity
           </Button>
         </div>
       </div>

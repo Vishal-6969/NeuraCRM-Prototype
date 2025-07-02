@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Card,
   CardContent,
@@ -27,11 +28,13 @@ import {
   ChevronDown,
   Paperclip,
   Upload,
+  Minus,
+  Plus as PlusIcon
 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useAccounts } from "@/context/AccountsContext";
 import { useContacts } from "@/context/ContactsContext";
-import { useOpportunities } from "@/context/OpportunitiesContext";
+import { useOpportunities as useDeals } from "@/context/OpportunitiesContext";
 import { useState } from "react";
 import { OpportunityModal, OpportunitiesList } from "@/components/opportunities";
 import PropTypes from "prop-types";
@@ -41,17 +44,15 @@ export default function AccountDetail({ accountId: propAccountId }) {
   const params = useParams();
   const accountId = propAccountId || params.accountId;
   const { accounts, updateAccount } = useAccounts();
-  console.log('AccountDetail debug:', { accountId, accounts });
   if (!Array.isArray(accounts)) {
     return <div>Accounts context missing or corrupted. accounts={String(accounts)}</div>;
   }
 
   // (rest of hooks)
   const { contacts, addContact } = useContacts();
-  const { addOpportunity, opportunities } = useOpportunities();
+  const { opportunities: deals, addOpportunity: addDeal } = useDeals();
 
   // For now, we'll find the account from the context.
-  // In a real app, you'd likely fetch this from an API.
   const account = accounts.find((acc) => acc.id === accountId);
   let dynamicAccount = null;
   if (!account) {
@@ -71,19 +72,154 @@ export default function AccountDetail({ accountId: propAccountId }) {
   const accountToShow = account || dynamicAccount;
   const accountContacts = contacts.filter(contact => contact.account === accountToShow?.name);
 
-  // Find related opportunities for this account
-  const relatedOpportunities = (opportunities || []).filter(
-    (opp) => opp.account === accountToShow?.name
+  // Find related deals for this account
+  const relatedDeals = (deals || []).filter(
+    (deal) => deal.account === accountToShow?.name
   );
 
   // Modal state
   const [showContactModal, setShowContactModal] = useState(false);
-  const [showOppModal, setShowOppModal] = useState(false);
+  const [showDealModal, setShowDealModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
   // Form state
   const [contactForm, setContactForm] = useState({ name: '', email: '', phone: '', title: '', account: accountToShow?.name || '', owner: accountToShow?.owner || '' });
   const [editForm, setEditForm] = useState(accountToShow ? { ...accountToShow } : { name: '', owner: '', industry: '', website: '', id: '' });
+
+  // Map zoom state
+  const [mapZoom, setMapZoom] = useState(1);
+
+  // Tile order state for left column
+  const initialTiles = [
+    { key: "information", label: "Information" },
+    { key: "contact", label: "Contact Details" },
+    { key: "files", label: "Add Files" },
+  ];
+  const [tileOrder, setTileOrder] = useState(initialTiles.map(t => t.key));
+  const [selectedTile, setSelectedTile] = useState(null);
+
+  // Tile renderers
+  const tileComponents = {
+    information: (
+      <Card className={`rounded-xl shadow-lg bg-white hover:shadow-2xl transition-shadow ${selectedTile === "information" ? "ring-2 ring-blue-400" : ""}`}
+        onClick={() => {
+          if (selectedTile === null) setSelectedTile("information");
+          else if (selectedTile !== "information") {
+            // Swap
+            const idx1 = tileOrder.indexOf(selectedTile);
+            const idx2 = tileOrder.indexOf("information");
+            const newOrder = [...tileOrder];
+            [newOrder[idx1], newOrder[idx2]] = [newOrder[idx2], newOrder[idx1]];
+            setTileOrder(newOrder);
+            setSelectedTile(null);
+          } else setSelectedTile(null);
+        }}
+        style={{ cursor: "pointer" }}
+      >
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2"><Building2 className="w-5 h-5 text-orange-500" />Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5 text-base">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 font-medium">Account Name</span>
+            <span className="font-semibold text-gray-900 text-lg">{accountToShow.name}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 font-medium">Website</span>
+            <a href={`http://${accountToShow.website}`} className="text-purple-600 hover:underline font-semibold">{accountToShow.website}</a>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 font-medium">Type</span>
+            <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-semibold">Business</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 font-medium">Description</span>
+            <span className="text-gray-700 italic">-</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 font-medium">Parent Account</span>
+            <span className="text-gray-700 italic">-</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-500 font-medium">Account Owner</span>
+            <span className="font-semibold text-orange-700">{accountToShow.owner}</span>
+          </div>
+        </CardContent>
+      </Card>
+    ),
+    contact: (
+      <Card className={`rounded-xl shadow-lg bg-white hover:shadow-2xl transition-shadow ${selectedTile === "contact" ? "ring-2 ring-blue-400" : ""}`}
+        onClick={() => {
+          if (selectedTile === null) setSelectedTile("contact");
+          else if (selectedTile !== "contact") {
+            // Swap
+            const idx1 = tileOrder.indexOf(selectedTile);
+            const idx2 = tileOrder.indexOf("contact");
+            const newOrder = [...tileOrder];
+            [newOrder[idx1], newOrder[idx2]] = [newOrder[idx2], newOrder[idx1]];
+            setTileOrder(newOrder);
+            setSelectedTile(null);
+          } else setSelectedTile(null);
+        }}
+        style={{ cursor: "pointer" }}
+      >
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2"><Phone className="w-5 h-5 text-purple-500" />Contact Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5 text-base">
+          <div>
+            <p className="text-sm text-gray-500">Phone</p>
+            <p className="font-medium">6587412589</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Billing Address</p>
+            <p className="font-medium">Siliguri<br/>Darjeeling<br/>West Bengal<br/>734001<br/>India</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-32 w-40 bg-gray-200 rounded-md flex items-center justify-center">
+              <p>Map Placeholder</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button variant="outline" size="icon" onClick={e => { e.stopPropagation(); setMapZoom(z => Math.max(1, z - 1)); }}><Minus className="w-4 h-4" /></Button>
+              <Button variant="outline" size="icon" onClick={e => { e.stopPropagation(); setMapZoom(z => z + 1); }}><PlusIcon className="w-4 h-4" /></Button>
+            </div>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Shipping Address</p>
+          </div>
+        </CardContent>
+      </Card>
+    ),
+    files: (
+      <Card className={`rounded-xl shadow-lg bg-white hover:shadow-2xl transition-shadow ${selectedTile === "files" ? "ring-2 ring-blue-400" : ""}`}
+        onClick={() => {
+          if (selectedTile === null) setSelectedTile("files");
+          else if (selectedTile !== "files") {
+            // Swap
+            const idx1 = tileOrder.indexOf(selectedTile);
+            const idx2 = tileOrder.indexOf("files");
+            const newOrder = [...tileOrder];
+            [newOrder[idx1], newOrder[idx2]] = [newOrder[idx2], newOrder[idx1]];
+            setTileOrder(newOrder);
+            setSelectedTile(null);
+          } else setSelectedTile(null);
+        }}
+        style={{ cursor: "pointer" }}
+      >
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2"><Upload className="w-5 h-5 text-blue-500" />Add Files</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
+            <Upload className="mx-auto h-8 w-8 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600">
+              <Button variant="link">Upload Files</Button> or drop files
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    ),
+  };
 
   // Handlers
   const handleAddContact = (e) => {
@@ -99,7 +235,6 @@ export default function AccountDetail({ accountId: propAccountId }) {
   };
 
   if (!accountToShow) {
-    console.log('AccountDetail: accountToShow not found', { accountId, accounts });
     return (
       <div>
         <div>Account not found</div>
@@ -122,7 +257,7 @@ export default function AccountDetail({ accountId: propAccountId }) {
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={() => setShowContactModal(true)}>New Contact</Button>
-          <Button variant="outline" onClick={() => setShowOppModal(true)}>New Opportunity</Button>
+          <Button variant="outline" onClick={() => setShowDealModal(true)}>New Deal</Button>
           <Button variant="default" onClick={() => setShowEditModal(true)}>
             Edit
             <ChevronDown className="w-4 h-4 ml-2" />
@@ -130,151 +265,72 @@ export default function AccountDetail({ accountId: propAccountId }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">About</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div className="flex justify-between">
-                <span>Account Name</span>
-                <span className="font-medium text-right">{accountToShow.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Website</span>
-                <a href={`http://${accountToShow.website}`} className="text-blue-600">{accountToShow.website}</a>
-              </div>
-              <div className="flex justify-between">
-                <span>Type</span>
-                <span></span>
-              </div>
-              <div className="flex justify-between">
-                <span>Description</span>
-                <span></span>
-              </div>
-              <div className="flex justify-between">
-                <span>Parent Account</span>
-                <span></span>
-              </div>
-              <div className="flex justify-between">
-                <span>Account Owner</span>
-                <span className="font-medium">{accountToShow.owner}</span>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Compact grid layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Group: Reorderable tiles */}
+        <div className="flex flex-col gap-4">
+          {tileOrder.map(key => React.cloneElement(tileComponents[key], { className: tileComponents[key].props.className + ' p-4' }))}
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Get in Touch</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="font-medium">6587412589</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Billing Address</p>
-                <p className="font-medium">Siliguri<br/>Darjeeling<br/>West Bengal<br/>734001<br/>India</p>
-              </div>
-              {/* Placeholder for map */}
-              <div className="h-40 bg-gray-200 rounded-md flex items-center justify-center">
-                <p>Map Placeholder</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Shipping Address</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">History</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-                <div>
-                    <p className="text-gray-500">Created By</p>
-                    <p>{accountToShow.owner} on {accountToShow.created}</p>
+        {/* Activities Card */}
+        <Card className="rounded-xl shadow bg-white hover:shadow-xl transition-shadow p-4">
+          <CardContent className="p-4">
+            <div className="flex justify-around mb-4">
+              <Button variant="outline" size="icon"><Mail className="h-4 w-4"/></Button>
+              <Button variant="outline" size="icon">Icon2</Button>
+              <Button variant="outline" size="icon">Icon3</Button>
+              <Button variant="outline" size="icon">Icon4</Button>
+            </div>
+            <div className="text-center py-6">
+              <p>No activities to show.</p>
+              <Button className="mt-2">Show All Activities</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contacts Card */}
+        <Card className="rounded-xl shadow bg-white hover:shadow-xl transition-shadow p-4">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg">Contacts ({accountContacts.length})</CardTitle>
+            <ChevronDown/>
+          </CardHeader>
+          <CardContent className="p-4">
+            {accountContacts.map(contact => (
+              <div key={contact.id} className="flex items-center space-x-4 py-2 border-b last:border-b-0">
+                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">
+                  {contact.name.charAt(0)}
                 </div>
                 <div>
-                    <p className="text-gray-500">Last Modified By</p>
-                    <p>{accountToShow.owner} on {accountToShow.created}</p>
+                  <p className="font-semibold text-blue-600">{contact.name}</p>
+                  <p className="text-sm text-gray-500">{contact.title}</p>
+                  <p className="text-sm text-gray-500">{contact.email}</p>
+                  <p className="text-sm text-gray-500">{contact.phone}</p>
                 </div>
-            </CardContent>
-          </Card>
-        </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
-        {/* Middle Column */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex justify-around">
-                  <Button variant="outline" size="icon"><Mail className="h-4 w-4"/></Button>
-                  <Button variant="outline" size="icon">Icon2</Button>
-                  <Button variant="outline" size="icon">Icon3</Button>
-                  <Button variant="outline" size="icon">Icon4</Button>
-              </div>
-              <div className="flex items-center justify-between mt-4">
-                <span>Only show activities with insights</span>
-                {/* Switch component would go here */}
-              </div>
-              <div className="text-center py-10">
-                <p>No activities to show.</p>
-                <Button className="mt-4">Show All Activities</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Deals Card */}
+        <Card className="rounded-xl shadow bg-white hover:shadow-xl transition-shadow p-4">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg">Deals</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <OpportunitiesList
+              opportunities={relatedDeals}
+              onAddOpportunity={() => setShowDealModal(true)}
+            />
+          </CardContent>
+        </Card>
 
-        {/* Right Column */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Contacts ({accountContacts.length})</CardTitle>
-              <ChevronDown/>
-            </CardHeader>
-            <CardContent>
-              {accountContacts.map(contact => (
-                <div key={contact.id} className="flex items-center space-x-4 py-2 border-b last:border-b-0">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600">
-                    {contact.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-blue-600">{contact.name}</p>
-                    <p className="text-sm text-gray-500">{contact.title}</p>
-                    <p className="text-sm text-gray-500">{contact.email}</p>
-                    <p className="text-sm text-gray-500">{contact.phone}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-          <OpportunitiesList
-            opportunities={relatedOpportunities}
-            onAddOpportunity={() => setShowOppModal(true)}
-          />
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Cases (0)</CardTitle>
-              <ChevronDown/>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Files (0)</CardTitle>
-              <ChevronDown/>
-            </CardHeader>
-            <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
-                    <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-600">
-                        <Button variant="link">Upload Files</Button> or drop files
-                    </p>
-                </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Cases Card */}
+        <Card className="rounded-xl shadow bg-white hover:shadow-xl transition-shadow p-4">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg">Cases (0)</CardTitle>
+            <ChevronDown/>
+          </CardHeader>
+        </Card>
       </div>
 
       {/* Modals */}
@@ -295,7 +351,7 @@ export default function AccountDetail({ accountId: propAccountId }) {
           </form>
         </DialogContent>
       </Dialog>
-      <OpportunityModal open={showOppModal} onClose={() => setShowOppModal(false)} initialData={{ account: accountToShow?.name || '' }} />
+      <OpportunityModal open={showDealModal} onClose={() => setShowDealModal(false)} initialData={{ account: accountToShow?.name || '' }} />
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent>
           <DialogHeader>
